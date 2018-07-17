@@ -9,10 +9,9 @@
 template <typename T>
 __global__
 void axpy_kernel(T* y, T* x, T a, int n){
-    auto idx = threadIdx.x;
-    while(idx < n){
+    auto idx = threadIdx.x + blockIdx.x * blockDim.x;
+    if(idx < n){
         y[idx] += a * x[idx];
-        idx += 1024;
     }
 }
 
@@ -40,13 +39,15 @@ int main(int argc, char** argv) {
 
     // TODO calculate grid dimensions
     // IGNORE for the first kernel writing exercise
+    auto block_dim = 64;
+    auto grid_dim = (n + (block_dim - 1)) / block_dim;
 
     // synchronize the host and device so that the timings are accurate
     cudaDeviceSynchronize();
 
     start = get_time();
     // TODO launch kernel (alpha=2.0)
-    axpy_kernel<<<1,1024>>>(y_device, x_device, 2.0, n);
+    axpy_kernel<<<grid_dim, block_dim>>>(y_device, x_device, 2.0, n);
 
     cudaDeviceSynchronize();
     auto time_axpy = get_time() - start;
