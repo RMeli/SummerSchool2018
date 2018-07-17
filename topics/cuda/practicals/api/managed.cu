@@ -35,6 +35,7 @@ int main(int argc, char** argv) {
 
     // validate the solution
     // this will copy the solution in y back to the host
+    cudaDeviceSynchronize();
     int errors = 0;
     #pragma omp parallel for reduction(+:errors)
     for(auto i=0; i<n; ++i) {
