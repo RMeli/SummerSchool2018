@@ -6,6 +6,42 @@
 
 // TODO : implement a kernel that reverses a string of length n in place
 // void reverse_string(char* str, int n)
+__global__
+void reverse_string_shared(char* str, int n){
+    __shared__ char buffer[1024];
+
+    auto idx = threadIdx.x;
+
+    if(idx < n){
+        // Load string to buffer
+        buffer[idx] = str[idx];
+
+        // Wait for all threads to finish loading
+        __syncthreads();
+
+        str[idx] = buffer[n - idx - 1];
+    }
+}
+
+__global__
+void reverse_string_shared_nosync(char* str, int n){
+    __shared__ char buffer[1024];
+    
+    auto idx = threadIdx.x;
+    auto idxI = n - threadIdx.x - 1;
+
+    if(idx != idxI && idx < n/2){
+        // Load values to swap
+        buffer[idx] = str[idx];
+        buffer[idxI] = str[idxI];
+
+	// No sync needed (every thread performs an independent swap)
+
+	// Swap
+        str[idx] = buffer[idxI];
+        str[idxI] = buffer[idx];
+    }
+}
 
 int main(int argc, char** argv) {
     // check that the user has passed a string to reverse
@@ -23,6 +59,9 @@ int main(int argc, char** argv) {
     std::cout << "string to reverse:\n" << string << "\n";
 
     // TODO : call the string reverse function
+    //reverse_string_shared<<<1,n>>>(string, n);    
+    //reverse_string_shared<<<1,n>>>(string, n);
+    reverse_string_shared_nosync<<<1,n>>>(string, n);
 
     // print reversed string
     cudaDeviceSynchronize();
