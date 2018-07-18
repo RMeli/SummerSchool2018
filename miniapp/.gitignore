@@ -32,6 +32,8 @@ hello
 diffusion/diffusion2d
 diffusion/diffusion2d_mpi
 async/memcopy[123]
+test
+unit_tests
 
 output.png
 
