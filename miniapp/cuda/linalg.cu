@@ -91,6 +91,15 @@ double ss_dot(Field const& x, Field const& y)
     double result = 0.;
     const int n = x.length();
 
+    #ifdef DEBUG
+    const int m = y.length();
+    assert(n == m);
+    #endif
+
+    auto handle = cublas_handle();
+
+    auto status = cublasDdot(handle, n, x.device_data(), 1, y.device_data(), 1, &result);
+
     return result;
 }
 
@@ -101,10 +110,7 @@ double ss_dot(Field const& x, Field const& y)
 // x is a vector
 double ss_norm2(Field const& x)
 {
-    double result = 0;
-    const int n = x.length();
-
-    return result;
+    return std::sqrt( ss_dot(x, x) );
 }
 
 ////////////////////////////////////////////////////////////////////////////////
