@@ -57,6 +57,33 @@ void axpy(double* y, double alpha, const double* x, int n){
     }
 }
 
+__global__
+void scaled_diff(double* y, const double alpha, const double* l, const double* r, int n){
+    auto idx = threadIdx.x + blockDim.x * blockIdx.x;
+
+    if(idx < n){
+        y[idx] = alpha * (l[idx] - r[idx]);
+    }
+}
+
+__global__
+void scale(double* y, const double alpha, const double* x, int n){
+    auto idx = threadIdx.x + blockDim.x * blockIdx.x;
+
+    if(idx < n){
+	y[idx] = alpha * x[idx]; 
+    }
+}
+
+__global__
+void lcomb(double* y, const double alpha, const double* x, const double beta, const double* z, int n){
+    auto idx = threadIdx.x + blockDim.x * blockIdx.x;
+
+    if(idx < n){
+	y[idx] = alpha * x[idx] + beta * z[idx];
+    }
+}
+
 } // namespace kernels
 
 bool cg_initialized = false;
@@ -194,20 +221,32 @@ void ss_axpy(Field& y, const double alpha, Field const& x)
 // alpha is a scalar
 void ss_scaled_diff(Field& y, const double alpha, Field const& l, Field const& r)
 {
+    const auto n = l.length();
+    auto grid_dim = calculate_grid_dim(block_dim, n);
+
+    kernels::scaled_diff<<<grid_dim, block_dim>>>(y.device_data(), alpha, l.device_data(), r.device_data(), n);
 }
 
 // computes y := alpha*x
 // alpha is scalar
 // y and x are vectors
-void ss_scale(Field& y, const double alpha, Field& x)
+void ss_scale(Field& y, const double alpha, Field const& x)
 {
+    const auto n = x.length();
+    auto grid_dim = calculate_grid_dim(block_dim, n);
+
+    kernels::scale<<<grid_dim, block_dim>>>(y.device_data(), alpha, x.device_data(), n);
 }
 
 // computes linear combination of two vectors y := alpha*x + beta*z
 // alpha and beta are scalar
 // y, x and z are vectors
-void ss_lcomb(Field& y, const double alpha, Field& x, const double beta, Field const& z)
+void ss_lcomb(Field& y, const double alpha, Field const& x, const double beta, Field const& z)
 {
+    const auto n = x.length();
+    auto grid_dim = calculate_grid_dim(block_dim, n);
+
+    kernels::lcomb<<<grid_dim, block_dim>>>(y.device_data(), alpha, x.device_data(), beta, z.device_data(), n);
 }
 
 // conjugate gradient solver
