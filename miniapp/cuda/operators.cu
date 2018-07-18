@@ -61,6 +61,25 @@ namespace kernels {
         //                          + U(i,j-1) + U(i,j+1) // north and south
         //                          + alpha * x_old(i,j)
         //                          + dxs * U(i,j) * (1.0 - U(i,j));
+        auto i = threadIdx.x + blockDim.x*blockIdx.x;
+	auto j = threadIdx.y + blockDim.y*blockIdx.y;
+
+        auto nx = params.nx;
+        auto ny = params.ny;
+        auto alpha = params.alpha;
+        auto dxs = params.dxs;
+
+        auto find_pos = [&nx] (size_t i, size_t j) {
+            return i + j * nx;
+        };
+
+	if( i > 0 && i < nx-1 && j > 0 && j < ny - 1){
+	     S[find_pos(i,j)] =  -(4. + alpha) * U[find_pos(i,j)]
+                                  + U[find_pos(i-1,j)] + U[find_pos(i+1,j)]
+                                  + U[find_pos(i,j-1)] + U[find_pos(i,j+1)]
+                                  + alpha * params.x_old[find_pos(i,j)]
+                                  + dxs * U[find_pos(i,j)] * (1.0 - U[find_pos(i,j)]);
+        }
     }
 
     __global__
@@ -86,6 +105,11 @@ namespace kernels {
 
             // TODO : do the stencil on the WEST side
             // WEST : i = 0
+	    pos = find_pos(0, j);
+	    S[pos] = -(4. + alpha) * U[pos]
+                        + U[pos+1] + U[pos-nx] + U[pos+nx]
+                        + alpha*params.x_old[pos] + params.bndW[j]
+                        + dxs * U[pos] * (1.0 - U[pos]);
         }
     }
 
@@ -98,9 +122,13 @@ namespace kernels {
         auto alpha = params.alpha;
         auto dxs = params.dxs;
 
-        if(i>0 && i<nx-1) {
+	auto find_pos = [&nx] (size_t i, size_t j) {
+            return i + j * nx;
+        };
+        
+	if(i>0 && i<nx-1) {
             // NORTH : j = ny -1
-            auto pos = i + nx*(ny-1);
+            auto pos = find_pos(i, ny - 1);
             S[pos] = -(4. + alpha) * U[pos]
                         + U[pos-1] + U[pos+1] + U[pos-nx]
                         + alpha*params.x_old[pos] + params.bndN[i]
@@ -108,6 +136,11 @@ namespace kernels {
 
             // TODO : do the stencil on the SOUTH side
             // SOUTH : j = 0
+	    pos = find_pos(i, 0);
+            S[pos] = -(4. + alpha) * U[pos]
+                        + U[pos-1] + U[pos+1] + U[pos+nx]
+                        + alpha*params.x_old[pos] + params.bndS[i]
+                        + dxs * U[pos] * (1.0 - U[pos]);
         }
     }
 
@@ -198,6 +231,9 @@ void diffusion(data::Field const& U, data::Field &S)
     };
 
     // TODO: apply stencil to the interior grid points
+    dim3 block_dim(16,16);
+    dim3 grid_dim(calculate_grid_dim(nx,block_dim.x), calculate_grid_dim(ny, block_dim.y));
+    kernels::stencil_interior<<<grid_dim, block_dim>>>(S.device_data(), U.device_data()); 
 
     cudaDeviceSynchronize();    // TODO: remove after debugging
     cuda_check_last_kernel("internal kernel"); // TODO: remove after debugging
