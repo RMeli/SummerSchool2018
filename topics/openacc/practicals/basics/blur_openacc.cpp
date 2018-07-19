@@ -76,22 +76,26 @@ void blur_twice_gpu_nocopies(double *in , double *out , int n, int nsteps)
     double *buffer = malloc_host<double>(n);
 
     // TODO: Specify the data to be copied to and from the GPU
+    #pragma acc data copyin(in[0:n]) copy(out[0:n]) create(buffer[0:n])
     {
         for (int istep = 0; istep < nsteps; ++istep) {
             int i;
 
             // TODO: Offload the following loop to the GPU
+            #pragma acc parallel loop
             for (i = 1; i < n-1; ++i) {
                 buffer[i] = blur(i, in);
             }
 
             // TODO: Offload the following loop to the GPU
+            #pragma acc parallel loop
             for (i = 2; i < n-2; ++i) {
                 out[i] = blur(i, buffer);
             }
 
             // TODO: Offload the following loop to the GPU
             //       Is it possible to just swap the pointers here?
+            #pragma acc parallel loop
             for (i = 0; i < n; ++i) {
                 in[i] = out[i];
             }
@@ -131,7 +135,8 @@ int main(int argc, char** argv) {
     auto time_host = get_time() - tstart_host;
 
     auto tstart = get_time();
-    blur_twice_gpu_naive(x0, x1, n, nsteps);
+    //blur_twice_gpu_naive(x0, x1, n, nsteps);
+    blur_twice_gpu_nocopies(x0, x1, n, nsteps);
     auto time = get_time() - tstart;
 
     auto validate = true;
