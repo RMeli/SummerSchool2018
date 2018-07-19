@@ -9,6 +9,7 @@
 #ifdef _OPENACC
 // TODO: Annotate the following function accordingly in order to be called from
 //       an OpenACC kernel context
+#pragma acc routine vector
 #endif
 double blur(int pos, const double *u)
 {
@@ -52,11 +53,14 @@ void blur_twice_gpu_naive(double *in , double *out , int n, int nsteps)
 
     for (auto istep = 0; istep < nsteps; ++istep) {
         // TODO: Offload the following loop to the GPU
+ 	#pragma acc parallel loop copyin(in[0:n]) copyout(buffer[0:n])
         for (auto i = 1; i < n-1; ++i) {
             buffer[i] = blur(i, in);
         }
 
         // TODO: Offload the following loop to the GPU
+        // out must be copied in because of in=out (pointer assignement)
+        #pragma acc parallel loop copyin(buffer[0:n]) copy(out[0:n])
         for (auto i = 2; i < n-2; ++i) {
             out[i] = blur(i, buffer);
         }
@@ -127,7 +131,7 @@ int main(int argc, char** argv) {
     auto time_host = get_time() - tstart_host;
 
     auto tstart = get_time();
-    blur_twice_gpu_nocopies(x0, x1, n, nsteps);
+    blur_twice_gpu_naive(x0, x1, n, nsteps);
     auto time = get_time() - tstart;
 
     auto validate = true;
