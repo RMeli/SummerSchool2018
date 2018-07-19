@@ -9,7 +9,7 @@
 #ifdef _OPENACC
 // TODO: Annotate the following function accordingly in order to be called from
 //       an OpenACC kernel context
-#pragma acc routine vector
+#pragma acc routine seq
 #endif
 double blur(int pos, const double *u)
 {
