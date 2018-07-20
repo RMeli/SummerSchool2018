@@ -62,6 +62,7 @@ class Field {
     const double* device_data() const { return (double *) acc_deviceptr(ptr_); }
 
     // access via (i,j) pair
+    #pragma acc routine seq
     inline double&       operator() (int i, int j)        {
         #ifdef DEBUG
         assert(i>=0 && i<xdim_ && j>=0 && j<ydim_);
@@ -69,6 +70,7 @@ class Field {
         return ptr_[i+j*xdim_];
     }
 
+    #pragma acc routine seq
     inline double const& operator() (int i, int j) const  {
         #ifdef DEBUG
         assert(i>=0 && i<xdim_ && j>=0 && j<ydim_);
@@ -77,6 +79,7 @@ class Field {
     }
 
     // access as a 1D field
+    #pragma acc routine seq
     inline double      & operator[] (int i) {
         #ifdef DEBUG
         assert(i>=0 && i<xdim_*ydim_);
@@ -84,6 +87,7 @@ class Field {
         return ptr_[i];
     }
 
+    #pragma acc routine seq
     inline double const& operator[] (int i) const {
         #ifdef DEBUG
         assert(i>=0 && i<xdim_*ydim_);
@@ -100,10 +104,12 @@ class Field {
     /////////////////////////////////////////////////
     void update_host() {
         // TODO: Update the host copy of the data
+	#pragma acc update self(ptr_[0:length()])
     }
 
     void update_device() {
         // TODO: Update the device copy of the data
+        #pragma acc update device(ptr_[0:length()])
     }
 
     private:
@@ -116,12 +122,14 @@ class Field {
         //       Pay attention to the order of the copies so that the data
         //       pointed to by `ptr_` is properly attached to the GPU's copy of
         //       this object.
+  	#pragma acc enter data copyin(this) create(ptr_[0:length()])
     }
 
     // set to a constant value
     void fill(double val) {
         // initialize the host and device copy at the same time
         // TODO: Offload this loop to the GPU
+  	#pragma acc data present(ptr_[0:length()])
         for(int i=0; i<xdim_*ydim_; ++i)
             ptr_[i] = val;
 
@@ -133,6 +141,7 @@ class Field {
     void free() {
         if (ptr_) {
             // TODO: Delete the copy of this object from the GPU
+	    #pragma acc exit data delete(ptr_[0:length()]) delete(this)
 
             // NOTE: You will see some OpenACC runtime errors when your program exits
             //       This is a problem with the PGI runtime; you may ignore them.
