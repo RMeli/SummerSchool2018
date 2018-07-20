@@ -96,7 +96,7 @@ void ss_add_scaled_diff(Field& y, Field const& x, const double alpha,
     const int n = y.length();
 
     // TODO: Offload this loop to the GPU
-    #pragma acc parallel loop present(y, x, l, r)
+    #pragma acc parallel loop present(y, x, l, r) async(0) 
     for (int i = 0; i < n; i++)
         y[i] = x[i] + alpha * (l[i] - r[i]);
 }
@@ -108,7 +108,7 @@ void ss_copy(Field& y, Field const& x)
     const int n = x.length();
 
     // TODO: Offload this loop to the GPU
-    #pragma acc parallel loop present(y, x)
+    #pragma acc parallel loop present(y, x) async(0)
     for (int i = 0; i < n; i++)
         y[i] = x[i];
 }
@@ -121,7 +121,7 @@ void ss_fill(Field& x, const double value)
     const int n = x.length();
 
     // TODO: Offload this loop to the GPU
-    #pragma acc parallel loop present(x)
+    #pragma acc parallel loop present(x) async(0)
     for (int i = 0; i < n; i++)
         x[i] = value;
 }
@@ -134,7 +134,7 @@ void ss_axpy(Field& y, const double alpha, Field const& x)
     const int n = x.length();
 
     // TODO: Offload this loop to the GPU
-    #pragma acc parallel loop present(y, x)
+    #pragma acc parallel loop present(y, x) async(0)
     for (int i = 0; i < n; i++)
         y[i] += alpha * x[i];
 }
@@ -147,7 +147,7 @@ void ss_scaled_diff(Field& y, const double alpha, Field const& l, Field const& r
     const int n = y.length();
 
     // TODO: Offload this loop to the GPU
-    #pragma acc parallel loop present(y, l, r)
+    #pragma acc parallel loop present(y, l, r) async(0)
     for (int i = 0; i < n; i++)
         y[i] = alpha * (l[i] - r[i]);
 }
@@ -160,7 +160,7 @@ void ss_scale(Field& y, const double alpha, Field& x)
     const int n = y.length();
 
     // TODO: Offload this loop to the GPU
-    #pragma acc parallel loop present(y, x)
+    #pragma acc parallel loop present(y, x) async(0)
     for (int i = 0; i < n; i++)
         y[i] = alpha * x[i];
 }
@@ -173,7 +173,7 @@ void ss_lcomb(Field& y, const double alpha, Field& x, const double beta, Field c
     const int n = y.length();
 
     // TODO: Offload this loop to the GPU
-    #pragma acc parallel loop present(y, x, z)
+    #pragma acc parallel loop present(y, x, z) async(0)
     for (int i = 0; i < n; i++)
         y[i] = alpha * x[i] + beta * z[i];
 }
@@ -210,7 +210,6 @@ void ss_cg(Field& x, Field const& b, const int maxiters, const double tol, bool&
     // we compute Fxold at startup
     // we have to keep x so that we can compute the F(x+exps*v)
     diffusion(x, Fxold);
-
     // v = x + epsilon*x
     ss_scale(v, 1.0 + eps, x);
 
@@ -253,6 +252,8 @@ void ss_cg(Field& x, Field const& b, const int maxiters, const double tol, bool&
 
         // find new norm
         rnew = ss_dot(r, r);
+
+	#pragma acc wait
 
         // test for convergence
         if (sqrt(rnew) < tol) {

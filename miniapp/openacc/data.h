@@ -109,7 +109,7 @@ class Field {
 
     void update_device() {
         // TODO: Update the device copy of the data
-        #pragma acc update device(ptr_[0:length()])
+        #pragma acc update device(ptr_[0:length()]) async(1)
     }
 
     private:

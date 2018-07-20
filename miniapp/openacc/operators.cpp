@@ -51,9 +51,9 @@ void diffusion(data::Field &U, data::Field &S)
     //       Check the compiler output to verify that you get the parallelism you expect.
 
     // the interior grid points
-    #pragma acc data present(U, S, x_old)
+    #pragma acc data present(U, S, x_old, bndN, bndS, bndE, bndW)
     {
-    #pragma acc parallel loop collapse(2) async(1)
+    #pragma acc parallel loop collapse(2) async(0)
     for (int j=1; j < jend; j++) {
         for (int i=1; i < iend; i++) {
             S(i,j) = -(4. + alpha) * U(i,j)               // central point
@@ -65,10 +65,9 @@ void diffusion(data::Field &U, data::Field &S)
     }
 
     // the east boundary
-    #pragma acc data present(U, S, x_old, bndE)
     {
         int i = nx - 1;
- 	#pragma acc parallel loop async(2)
+ 	#pragma acc parallel loop async(0)
         for (int j = 1; j < jend; j++)
         {
             S(i,j) = -(4. + alpha) * U(i,j)
@@ -79,10 +78,9 @@ void diffusion(data::Field &U, data::Field &S)
     }
 
     // the west boundary
-    #pragma acc data present(U, S, x_old, bndW)
     {
         int i = 0;
-	#pragma acc parallel loop async(2)
+	#pragma acc parallel loop async(0)
         for (int j = 1; j < jend; j++)
         {
             S(i,j) = -(4. + alpha) * U(i,j)
@@ -93,11 +91,10 @@ void diffusion(data::Field &U, data::Field &S)
     }
 
     // the north boundary (plus NE and NW corners)
-    #pragma acc data present(U, S, x_old, bndW, bndE, bndN)
     {
         int j = ny - 1;
 
-	#pragma acc parallel num_gangs(1) // Serial execution on gpu
+	#pragma acc parallel num_gangs(1) async(0) // Serial execution on gpu
         {
             int i = 0; // NW corner
             S(i,j) = -(4. + alpha) * U(i,j)
@@ -107,7 +104,7 @@ void diffusion(data::Field &U, data::Field &S)
         }
 
         // north boundary
-  	#pragma acc parallel loop async(2)
+  	#pragma acc parallel loop async(0)
         for (int i = 1; i < iend; i++)
         {
             S(i,j) = -(4. + alpha) * U(i,j)
@@ -116,7 +113,7 @@ void diffusion(data::Field &U, data::Field &S)
                         + dxs * U(i,j) * (1.0 - U(i,j));
         }
 
-	#pragma acc parallel num_gangs(1) // Serial execution on gpu
+	#pragma acc parallel num_gangs(1) async(0) // Serial execution on gpu
         {
             int i = nx-1; // NE corner
             S(i,j) = -(4. + alpha) * U(i,j)
@@ -127,11 +124,10 @@ void diffusion(data::Field &U, data::Field &S)
     }
 
     // the south boundary
-    #pragma acc data present(U, S, x_old, bndW, bndE, bndS)
     {
         int j = 0;
 
-	#pragma acc parallel num_gangs(1) // Serial execution on gpu
+	#pragma acc parallel num_gangs(1) async(0) // Serial execution on gpu
         {
             int i = 0; // SW corner
             S(i,j) = -(4. + alpha) * U(i,j)
@@ -141,7 +137,7 @@ void diffusion(data::Field &U, data::Field &S)
         }
 
         // south boundary
-        #pragma acc parallel loop async(2)
+        #pragma acc parallel loop async(0)
         for (int i = 1; i < iend; i++)
         {
             S(i,j) = -(4. + alpha) * U(i,j)
@@ -150,7 +146,7 @@ void diffusion(data::Field &U, data::Field &S)
                         + dxs * U(i,j) * (1.0 - U(i,j));
         }
 
-	#pragma acc parallel num_gangs(1) // Serial execution on gpu
+	#pragma acc parallel num_gangs(1) async(0) // Serial execution on gpu
         {
             int i = nx - 1; // SE corner
             S(i,j) = -(4. + alpha) * U(i,j)
@@ -159,7 +155,6 @@ void diffusion(data::Field &U, data::Field &S)
                         + dxs * U(i,j) * (1.0 - U(i,j));
         }
     }
-    #pragma acc wait 
     } // end acc kernels
 }
 
