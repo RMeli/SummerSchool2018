@@ -53,7 +53,7 @@ void diffusion(data::Field &U, data::Field &S)
     // the interior grid points
     #pragma acc data present(U, S, x_old)
     {
-    #pragma acc parallel loop collapse(2)
+    #pragma acc parallel loop collapse(2) async(1)
     for (int j=1; j < jend; j++) {
         for (int i=1; i < iend; i++) {
             S(i,j) = -(4. + alpha) * U(i,j)               // central point
@@ -68,7 +68,7 @@ void diffusion(data::Field &U, data::Field &S)
     #pragma acc data present(U, S, x_old, bndE)
     {
         int i = nx - 1;
- 	#pragma acc parallel loop
+ 	#pragma acc parallel loop async(2)
         for (int j = 1; j < jend; j++)
         {
             S(i,j) = -(4. + alpha) * U(i,j)
@@ -82,7 +82,7 @@ void diffusion(data::Field &U, data::Field &S)
     #pragma acc data present(U, S, x_old, bndW)
     {
         int i = 0;
-	#pragma acc parallel loop
+	#pragma acc parallel loop async(2)
         for (int j = 1; j < jend; j++)
         {
             S(i,j) = -(4. + alpha) * U(i,j)
@@ -107,7 +107,7 @@ void diffusion(data::Field &U, data::Field &S)
         }
 
         // north boundary
-  	#pragma acc parallel loop
+  	#pragma acc parallel loop async(2)
         for (int i = 1; i < iend; i++)
         {
             S(i,j) = -(4. + alpha) * U(i,j)
@@ -141,7 +141,7 @@ void diffusion(data::Field &U, data::Field &S)
         }
 
         // south boundary
-        #pragma acc parallel loop
+        #pragma acc parallel loop async(2)
         for (int i = 1; i < iend; i++)
         {
             S(i,j) = -(4. + alpha) * U(i,j)
@@ -159,6 +159,7 @@ void diffusion(data::Field &U, data::Field &S)
                         + dxs * U(i,j) * (1.0 - U(i,j));
         }
     }
+    #pragma acc wait 
     } // end acc kernels
 }
 
