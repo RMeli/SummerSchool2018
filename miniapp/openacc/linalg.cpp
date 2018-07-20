@@ -56,6 +56,7 @@ void cg_init(int nx, int ny)
 // x and y are vectors
 double ss_dot(Field const& x, Field const& y)
 {
+/*
     double result = 0.;
     const int n = x.length();
     auto status = cublasDdot(
@@ -63,6 +64,15 @@ double ss_dot(Field const& x, Field const& y)
             x.device_data(), 1,
             y.device_data(), 1,
             &result);
+    return result;
+*/
+    const int n = y.length();
+    double result = 0.;
+
+    #pragma acc parallel loop reduction(+:result) present(x, y) async(0)
+    for (int i = 0; i < n; i++)
+        result += x[i] * y[i];
+
     return result;
 }
 
@@ -73,6 +83,7 @@ double ss_dot(Field const& x, Field const& y)
 // x is a vector
 double ss_norm2(Field const& x)
 {
+/*
     double result = 0;
     const int n = x.length();
 
@@ -80,6 +91,15 @@ double ss_norm2(Field const& x)
             cublas_handle(), n,
             x.device_data(), 1,
             &result);
+    return result;
+*/
+    const int n = x.length();
+    double result = 0.;
+
+    #pragma acc parallel loop reduction(+:result) present(x) async(0)
+    for (int i = 0; i < n; i++)
+        result += x[i] * x[i];
+
     return result;
 }
 
@@ -228,6 +248,7 @@ void ss_cg(Field& x, Field const& b, const int maxiters, const double tol, bool&
     double rnew = rold;
 
     // check for convergence
+    #pragma acc wait
     success = sqrt(rold) < tol;
     if (success) {
         return;
@@ -253,9 +274,8 @@ void ss_cg(Field& x, Field const& b, const int maxiters, const double tol, bool&
         // find new norm
         rnew = ss_dot(r, r);
 
-	#pragma acc wait
-
         // test for convergence
+        #pragma acc wait
         if (sqrt(rnew) < tol) {
             success = true;
             break;

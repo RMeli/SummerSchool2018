@@ -63,7 +63,7 @@ void diffusion(data::Field &U, data::Field &S)
                                     + dxs * U(i,j) * (1.0 - U(i,j));
         }
     }
-
+    
     // the east boundary
     {
         int i = nx - 1;
