@@ -37,12 +37,16 @@ int main (int argc, char *argv[])
 
     /* Get process info. */
     MPI_Comm_size(MPI_COMM_WORLD, &size);
+    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 
     /* Set cartesian topology. */
-
+    dims[0] = size;
+    periods[0] = 1;
+    reorder = true;
+    MPI_Cart_create(MPI_COMM_WORLD, 1, dims, periods, reorder, &new_comm);
 
     /* Get nearest neighbour rank. */
-
+    MPI_Cart_shift(new_comm, 0, 1, &left, &right);
 
     /* Compute global sum. */
     sum = 0;
