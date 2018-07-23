@@ -74,6 +74,11 @@ int main(int argc, char *argv[])
     }
 
     // neighbouring ranks with cartesian grid communicator
+    MPI_Comm comm_cart;
+    dims[0] = 4; dims[1] = 4;
+    periods[0] = 1; periods[1] = 1;
+
+    MPI_Cart_create(MPI_COMM_WORLD, 2, dims, periods, false, &comm_cart);
 
     // we do not allow the reordering of ranks here
     // an alternative solution would be to allow the reordering and to use the new communicator for the communication
@@ -82,15 +87,32 @@ int main(int argc, char *argv[])
     // ranks in all dimensions in a cyclic manner.
 
     //  derived datatype, create a datatype for sending the column
+    MPI_Datatype colT;
+    MPI_Type_vector(SUBDOMAIN, 1, DOMAINSIZE, MPI_DOUBLE, &colT); // Stride is DOMAINSIZE
+    MPI_Type_commit(&colT);
 
     //  ghost cell exchange with the neighbouring cells in all directions
     //  to the top
+    MPI_Cart_shift(comm_cart, 0, 1, &rank_top, &rank_bottom);
+    MPI_Irecv(&data[1 + (DOMAINSIZE-1) * DOMAINSIZE], SUBDOMAIN, MPI_DOUBLE, rank_bottom, 0, MPI_COMM_WORLD, &request);
+    MPI_Send(&data[1 + DOMAINSIZE], SUBDOMAIN, MPI_DOUBLE, rank_top, 0, MPI_COMM_WORLD);
+    MPI_Wait(&request, &status);
 
     //  to the bottom
+    MPI_Irecv(&data[1], SUBDOMAIN, MPI_DOUBLE, rank_top, 0, MPI_COMM_WORLD, &request);
+    MPI_Send(&data[1 + (DOMAINSIZE-2) * DOMAINSIZE], SUBDOMAIN, MPI_DOUBLE, rank_bottom, 0, MPI_COMM_WORLD);
+    MPI_Wait(&request, &status);
 
     //  to the left
+    MPI_Cart_shift(comm_cart, 1, 1, &rank_left, &rank_right);
+    MPI_Irecv(&data[(DOMAINSIZE - 1) + DOMAINSIZE], 1, colT, rank_right, 0, MPI_COMM_WORLD, &request);
+    MPI_Send(&data[DOMAINSIZE + 1], 1, colT, rank_left, 0, MPI_COMM_WORLD);
+    MPI_Wait(&request, &status);
 
     //  to the right
+    MPI_Irecv(&data[DOMAINSIZE], 1, colT, rank_left, 0, MPI_COMM_WORLD, &request);
+    MPI_Send(&data[(DOMAINSIZE - 2) + DOMAINSIZE], 1, colT, rank_right, 0, MPI_COMM_WORLD);
+    MPI_Wait(&request, &status);
 
     if (rank==9) {
         printf("data of rank 9 after communication\n");
@@ -102,6 +124,7 @@ int main(int argc, char *argv[])
         }
     }
 
+    MPI_Type_free(&colT);
     MPI_Finalize();
 
     return 0;
