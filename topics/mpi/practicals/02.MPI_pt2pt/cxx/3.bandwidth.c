@@ -30,6 +30,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include <iostream>
+
 #include <mpi.h>
 
 #define NMESSAGES 100
@@ -68,6 +70,17 @@ int main(int argc, char *argv[])
          * What do you observe? (plot it)
          */
         start = MPI_Wtime();
+
+	for( k = 0; k < NMESSAGES; k++) {
+	    if(my_rank == 0){
+            	MPI_Send(buffer, length_of_message, MPI_CHAR, 1, 0, MPI_COMM_WORLD);
+            	MPI_Recv(buffer, length_of_message, MPI_CHAR, 1, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            }
+            else{
+            	MPI_Recv(buffer, length_of_message, MPI_CHAR, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            	MPI_Send(buffer, length_of_message, MPI_CHAR, 0, 1, MPI_COMM_WORLD);
+            }	
+	}
 
         stop = MPI_Wtime();
         if (my_rank == 0) {

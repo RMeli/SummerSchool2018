@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
     }
     else{
 	MPI_Recv(buffer, SIZE, MPI_FLOAT, 0, PING, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
- 	MPI_Send(buffer, SIZE, MPI_FLOAT, 0, PONG, MPI_COMM_WORLD);
+	MPI_Send(buffer, SIZE, MPI_FLOAT, 0, PONG, MPI_COMM_WORLD);
     }
 
     printf("Rank %d says: Ping-pong complete.\n",my_rank);
