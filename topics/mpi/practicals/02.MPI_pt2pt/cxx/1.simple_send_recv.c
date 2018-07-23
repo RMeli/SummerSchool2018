@@ -17,6 +17,8 @@
 #include <stdlib.h>
 #include <mpi.h>
 
+#include <iostream>
+
 /* program that sends a number from one process to another */
 
 int main(int argc, char *argv[])
@@ -40,6 +42,12 @@ int main(int argc, char *argv[])
         scanf("%d",&number);
     }
     /* send the contents of number from rank 0 to rank 1 using MPI_Send --- MPI_Recv */
+    if(rank == 0 ){
+    	MPI_Send(&number, 1, MPI_INT, 1, 0, MPI_COMM_WORLD);
+    }
+    else{
+	MPI_Recv(&number, 1, MPI_INT, 0, MPI_ANY_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    }
 
     if (rank == 1)
         printf("The communicated number is %i\n", number);
