@@ -37,7 +37,6 @@ int main (int argc, char *argv[])
 
     /* Get process info. */
     MPI_Comm_size(MPI_COMM_WORLD, &size);
-    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 
     /* Set cartesian topology. */
     dims[0] = size;
@@ -49,6 +48,8 @@ int main (int argc, char *argv[])
     MPI_Cart_shift(new_comm, 0, 1, &left, &right);
 
     /* Compute global sum. */
+    MPI_Comm_rank(new_comm, &my_rank);
+
     sum = 0;
     snd_buf = my_rank;
 
