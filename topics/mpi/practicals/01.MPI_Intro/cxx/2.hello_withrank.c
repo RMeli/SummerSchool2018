@@ -12,9 +12,9 @@
  * Contents: C-Source                                           *
  ****************************************************************/
 
-#include <stdio.h>
 #include <mpi.h>
 
+#include <iostream>
 
 int main(int argc, char *argv[])
 {
@@ -23,11 +23,20 @@ int main(int argc, char *argv[])
     MPI_Init(&argc, &argv);
 
     /* Get the rank of each process */
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
     /* Get the size of the communicator */
+    int nranks;
+    MPI_Comm_size(MPI_COMM_WORLD, &nranks);
 
     /* Write code such that every process writes its rank and the size of the communicator,
      * but only process 0 prints "hello world*/
+    if(rank == 0){
+	std::cout << "Hello, World! " << std::flush;
+    }
+    
+    std::cout << "Rank " << rank << " of " << nranks << std::endl << std::flush;
 
     MPI_Finalize();
     return 0;
