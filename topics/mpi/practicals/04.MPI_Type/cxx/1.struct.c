@@ -41,11 +41,20 @@ int main(int argc, char *argv[])
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
     /* Setup description of the 4 MPI_FLOAT fields x, y, z, velocity */
+    offsets[0] = 0;
+    oldtypes[0] = MPI_FLOAT;
+    blockcounts[0] = 4;
 
     /* Setup description of the 2 MPI_INT fields n, type */
+    MPI_Type_extent(MPI_FLOAT, &extent);
+    offsets[1] = blockcounts[0] * extent;
+    oldtypes[1] = MPI_INT;
+    blockcounts[1] = 2;
 
     /* Now define structured type and commit it */
-
+    MPI_Type_create_struct(2, blockcounts, offsets, oldtypes, &particletype);
+    MPI_Type_commit(&particletype);
+    
     /* setup and send particules */
     if (rank == 0) {
         for (i=0; i<NELEM; i++) {
@@ -63,6 +72,7 @@ int main(int argc, char *argv[])
     printf("rank= %d   %3.2f %3.2f %3.2f %3.2f %d %d\n", rank, p[3].x, p[3].y, p[3].z, p[3].velocity, p[3].n, p[3].type);
 
     /* Free type */
+    MPI_Type_free(&particletype);
     MPI_Finalize();
     return 0;
 }
