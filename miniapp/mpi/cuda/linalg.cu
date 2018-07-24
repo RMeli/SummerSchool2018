@@ -174,6 +174,7 @@ double ss_dot(Field const& x, Field const& y)
             &result
         );
 
+	MPI_Allreduce(&result, &result_global, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
     return result_global;
 }
@@ -197,6 +198,7 @@ double ss_norm2(Field const& x)
     // partial sums before taking sqrt of the full global sum
     result *= result;
 
+	MPI_Allreduce(&result, &result_global, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
     return sqrt(result_global);
 }
