@@ -31,7 +31,7 @@ void SubDomain::init(int mpi_rank, int mpi_size, Discretization& discretization)
 {
     // determine the number of subdomains in the x and y dimensions
     int dims[2] = { 0, 0 };
-    MPI_Dims_create(mpi_size, 2, &dims)
+    MPI_Dims_create(mpi_size, 2, dims);
 
     ndomy = dims[0];
     ndomx = dims[1];
@@ -39,7 +39,7 @@ void SubDomain::init(int mpi_rank, int mpi_size, Discretization& discretization)
     // create a 2D non-periodic cartesian topology
     int periods[2] = { 0, 0 };
     
-    MPI_Comm &comm_cart;
+    MPI_Comm comm_cart;
     MPI_Cart_create(MPI_COMM_WORLD, 2, dims, periods, true, &comm_cart);
 
     // retrieve coordinates of the rank in the topology

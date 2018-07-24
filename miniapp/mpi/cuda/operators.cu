@@ -327,6 +327,7 @@ void wait_exchange_rdma(MPI_Request requests[], int num_requests) {
 // *** START OPTIONAL ***
 // MPI RMA - one sided
 // create 1-sided windows with boundaries
+
 void create_windows() {
     using data::domain;
 
@@ -342,7 +343,7 @@ void create_windows() {
 // clean-up 1-sided
 void free_windows() {
     using data::domain;
-
+/*
     if(domain.north_win!=MPI_WIN_NULL) {
     }
     if(domain.south_win!=MPI_WIN_NULL) {
@@ -351,6 +352,7 @@ void free_windows() {
     }
     if(domain.west_win!=MPI_WIN_NULL) {
     }
+*/
 }
 
 // Exchange that performs MPI ione sideds from/to host memory, and copies
