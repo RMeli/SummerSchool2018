@@ -17,7 +17,7 @@
 #include <stdlib.h>
 #include <mpi.h>
 
-/* A rank put its rank value to its left neighbour */
+/* A rank get its rank value to its left neighbour */
 /* use MPI_Win_allocate and MPI_Get with active synchronization with MPI_Win_fence */
 
 int main(int argc, char *argv[])
@@ -37,9 +37,14 @@ int main(int argc, char *argv[])
         left_rank = size -1;
 
     // create window
+    MPI_Win win;
+    MPI_Win_allocate(sizeof(int), sizeof(int), MPI_INFO_NULL, MPI_COMM_WORLD, &win_buffer, &win);
     *win_buffer = rank;
 
     //active synchronization + get
+    MPI_Win_fence(0, win);
+    MPI_Get(&number, 1, MPI_INT, left_rank, 0, 1, MPI_INT, win);
+    MPI_Win_fence(0, win); 
 
     printf("My rank is %d, my number is: %d",rank, number);
     if (rank-number == 1 || number-rank==size-1) {
@@ -49,6 +54,7 @@ int main(int argc, char *argv[])
     }
 
     // cleanup
+    MPI_Win_free(&win);
 
     MPI_Finalize();
     return 0;
