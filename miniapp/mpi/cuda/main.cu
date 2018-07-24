@@ -154,6 +154,9 @@ int main(int argc, char* argv[])
 
     // initialize MPI
     int mpi_rank, mpi_size;
+    MPI_Init(&argc, &argv);
+    MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
+ 	MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
 
     bool is_root = mpi_rank==0;
 
@@ -327,6 +330,7 @@ int main(int argc, char* argv[])
     if (is_root) std::cout << "Goodbye!" << std::endl;
 
     // clean windows, communicator and do finalize
+    MPI_Finalize();
 
     return 0;
 }
