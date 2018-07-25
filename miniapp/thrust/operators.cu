@@ -83,12 +83,40 @@ struct boundary_functor
 
 // TODO:  implement the four corners:  SW, NW, SE, NE
       if(is_sw) {
+	   thrust::get<7>(t) = -(4. + alpha) * my_val
+  			  + *(&thrust::get<1>(t)-nmj) // BND_W(j)
+			  + *(&thrust::get<6>(t)+1)
+                          + *(&thrust::get<6>(t)+nx)
+                          + *(&thrust::get<3>(t)-nmi) // BND_S(i)
+                          + alpha * thrust::get<5>(t)
+                          + dxs * my_val * (1.0 - my_val);
       }
       if(is_nw) {
+	  thrust::get<7>(t) = -(4. + alpha) * my_val
+			  + *(&thrust::get<1>(t)-nmj) // BND_W(j)
+			  + *(&thrust::get<6>(t)+1)
+                          + *(&thrust::get<6>(t)-nx)
+                          + *(&thrust::get<4>(t)-nmi) // BND_N(i)
+                          + alpha * thrust::get<5>(t)
+                          + dxs * my_val * (1.0 - my_val);
       }
       if(is_se) {
+	  thrust::get<7>(t) = -(4. + alpha) * my_val
+                          + *(&thrust::get<6>(t)-1) + 
+			  + *(&thrust::get<2>(t)-nmj) // BND_E(j)
+                          + *(&thrust::get<6>(t)+nx)
+                          + *(&thrust::get<3>(t)-nmi) // BND_S(i)
+                          + alpha * thrust::get<5>(t)
+                          + dxs * my_val * (1.0 - my_val);
       }
       if(is_ne) {
+      	  thrust::get<7>(t) = -(4. + alpha) * my_val
+                          + *(&thrust::get<6>(t)-1) 
+			  + *(&thrust::get<2>(t)-nmj) // BND_E(j)
+                          + *(&thrust::get<6>(t)-nx)
+                          + *(&thrust::get<4>(t)-nmi) // BND_N(i)
+                          + alpha * thrust::get<5>(t)
+                          + dxs * my_val * (1.0 - my_val);
       }
     }
 };
@@ -136,6 +164,13 @@ void diffusion_thrust(int nx, int ny, double alpha, double dxs,
                      interior_functor(nx,ny,alpha,dxs));
 
 // TODO:  zip up the tuple for the boundary_functor and invoke with for_each
+    // arguments: 0:count  1:BND_W  2:BND_E  3:BND_S  4:BND_N  5:X_OLD  6:U  7:S
+    auto Tfirst = thrust::make_tuple(n_first, BND_W.cbegin(), BND_W.cbegin(), BND_S.cbegin(), BND_N.cbegin(), X_OLD.cbegin(), U.cbegin(), S.begin() );
+    auto first = thrust::make_zip_iterator(Tfirst);
+    auto Tlast = thrust::make_tuple(n_last, BND_W.cend(), BND_W.cend(), BND_S.cend(), BND_N.cend(), X_OLD.cend(), U.cend(), S.end() );
+    auto last = thrust::make_zip_iterator(Tlast);
+
+    thrust::for_each(first, last, boundary_functor(nx, ny, alpha, dxs));
 }
 
 
