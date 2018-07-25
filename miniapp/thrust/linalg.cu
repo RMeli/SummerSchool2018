@@ -79,8 +79,9 @@ struct lcomb_functor
     lcomb_functor(double _a, double _b) : a(_a), b(_b) {}
 
     __host__ __device__
-        double operator()(const double& x, const double& y) const {
+        double operator()(const double& x, const double& y) const{
 // TODO:  program the return value
+	    return a * x + b * y;
         }
 };
 
@@ -93,7 +94,8 @@ struct add_scaled_diff_functor
     __host__ __device__
         void operator()(Tuple t) const {
 // TODO: program Y = X + a * (L - R); where the arguments of the tuple are O:X  1:L  2:R  3:Y
-        }
+            thrust::get<3>(t) = thrust::get<0>(t) + a * (thrust::get<1>(t) - thrust::get<2>(t));
+ 	}
 };
 
 namespace linalg {
@@ -124,6 +126,7 @@ double dot_thrust(thrust::device_vector<double>& X, thrust::device_vector<double
 double norm2_thrust(thrust::device_vector<double>& X)
 {
 // TODO: implement the norm using sqrt and thrust::inner_product
+    return std::sqrt( thrust::inner_product(X.cbegin(), X.cend(), X.cbegin(), 0.0) );
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -137,6 +140,10 @@ void add_scaled_diff_thrust(double A, thrust::device_vector<double>& X, thrust::
                             thrust::device_vector<double>& R, thrust::device_vector<double>& Y)
 {
 // TODO:  make tuple using make_zip_iterator where T = (X,L,R,Y)
+    auto first = thrust::make_zip_iterator(thrust::make_tuple(X.cbegin(), L.cbegin(), R.cbegin(), Y.begin()));
+    auto last = thrust::make_zip_iterator(thrust::make_tuple(X.cend(), L.cend(), R.cend(), Y.end()));
+
+    thrust::for_each(first, last, add_scaled_diff_functor(A));
 }
 
 // copy one vector into another y := x
